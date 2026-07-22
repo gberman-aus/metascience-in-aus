@@ -96,7 +96,7 @@ areas are inevitably judgement calls.
 | Scientometrics & open knowledge | Bibliometrics, open access / open knowledge, the COKI programme |
 | Research funding & evaluation | Funding, grants, grant peer review, research-impact evaluation |
 | Science communication & STS | Public engagement, science communication, science & technology studies |
-| Indigenous research & data sovereignty | First Nations research quality, appraisal tools, Indigenous data sovereignty |
+| Indigenous research & data sovereignty | Indigenous data sovereignty, ethics for First Nations research, evaluation of First Nations research |
 
 ## 4. What the map shows
 
