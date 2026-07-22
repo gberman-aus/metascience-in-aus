@@ -260,6 +260,26 @@ main{flex:1;position:relative;min-height:0}
 .alabel{font-family:Spectral,serif;font-size:12px;fill:var(--txt);font-weight:600;pointer-events:none;paint-order:stroke;stroke:#fff;stroke-width:3.4px;stroke-linejoin:round}
 .hublabel{font-family:Spectral,serif;font-size:11.5px;fill:var(--txt);font-weight:600;pointer-events:none;paint-order:stroke;stroke:#fff;stroke-width:3.2px;stroke-linejoin:round}
 .nlabel{font-size:9.5px;fill:#41505a;pointer-events:none;paint-order:stroke;stroke:#fff;stroke-width:2.8px;stroke-linejoin:round}
+/* Growth view: scroll-driven build-up of the network over time */
+#growscroll{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;background:var(--paper)}
+#growsticky{position:sticky;top:0;height:100%;overflow:hidden}
+#growsvg{width:100%;height:100%;display:block}
+#growspacer{height:340%}
+#growhud{position:absolute;top:16px;left:22px;pointer-events:none;z-index:3}
+#growyear{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:54px;line-height:1;color:var(--txt);letter-spacing:-.02em}
+#growcounts{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--muted);margin-top:7px}
+#grownew{font-size:12.5px;color:var(--txt);margin-top:10px;max-width:36ch;line-height:1.45}
+#grownew b{font-weight:600;color:var(--accent)}
+#growExplore{display:none;margin-top:16px;pointer-events:auto;background:var(--txt);color:var(--paper);border:0;
+  font:inherit;font-size:12.5px;font-weight:600;padding:9px 16px;border-radius:7px;cursor:pointer;
+  box-shadow:0 4px 16px rgba(15,20,23,.16);transition:background .14s}
+#growExplore:hover{background:var(--accent)}
+#growhint{position:absolute;bottom:18px;left:50%;transform:translateX(-50%);font-size:12px;color:var(--muted);
+  background:rgba(255,255,255,.86);padding:6px 14px;border-radius:20px;border:1px solid var(--line);
+  pointer-events:none;transition:opacity .3s;box-shadow:0 3px 12px rgba(15,20,23,.06)}
+.gnode{cursor:pointer}
+.gnode-lbl{font-family:Spectral,serif;font-size:11px;font-weight:600;fill:var(--txt);pointer-events:none;
+  paint-order:stroke;stroke:#fff;stroke-width:3px;stroke-linejoin:round}
 #tlwrap{position:absolute;inset:0;padding:24px 34px;overflow:auto;background:var(--paper)}
 .tl-h{font-family:Spectral,serif;font-size:16px;margin:0 0 2px;color:var(--txt)}
 .tl-sub{font-size:12px;color:var(--muted);margin:0 0 14px;max-width:80ch}
@@ -285,10 +305,10 @@ footer{padding:7px 22px;border-top:1px solid var(--line);font-size:10px;color:va
       <p>Co-authorship among Australia-based metascience researchers, coloured by research strand and embedded in the international leaders they publish with. Australia-based researchers show at full colour; international collaborators are faded. Squares are international leaders. Every cross-tier link is a verified OpenAlex co-authorship.</p>
     </div>
     <div class="stats" id="stats"></div>
-    <div class="tabs"><button class="tab on" data-v="net">Network</button><button class="tab" data-v="time">Timeline</button></div>
+    <div class="tabs"><button class="tab on" data-v="time">Growth</button><button class="tab" data-v="net">Explore</button></div>
   </header>
   <main>
-    <section class="view on" data-v="net">
+    <section class="view" data-v="net">
       <div class="panel">
         <div><div class="lbl">Find a researcher</div><input id="search" placeholder="Type a name..." autocomplete="off"></div>
         <div><div class="lbl">Size nodes by</div>
@@ -303,19 +323,29 @@ footer{padding:7px 22px;border-top:1px solid var(--line);font-size:10px;color:va
           <div class="tier"><span class="swatch" style="border-radius:3px;background:#5c6b82;opacity:.45"></span>International leader</div>
         </div>
         <label class="togg"><input type="checkbox" id="lblToggle"> Show all names</label>
-        <button id="exportBtn" class="btn" title="Save 3× PNGs of the map and the timeline">⬇ Export PNG (map + timeline)</button>
+        <button id="exportBtn" class="btn" title="Save a 3× PNG of the map">⬇ Export PNG (map)</button>
         <div class="hint">Click a node to isolate its collaborators. Hover to spotlight a neighbourhood. Drag to reposition; scroll to zoom.</div>
       </div>
       <svg id="net"></svg>
     </section>
-    <section class="view" data-v="time">
-      <div id="tlwrap"><h2 class="tl-h">Seed corpus over time</h2>
-        <p class="tl-sub">Metascience outputs per year with at least one Australia-based author, split by whether the first author is Australia-based. Most-cited work annotated.</p>
-        <svg id="tlsvg"></svg></div>
+    <section class="view on" data-v="time">
+      <div id="growscroll">
+        <div id="growsticky">
+          <svg id="growsvg"></svg>
+          <div id="growhud">
+            <div id="growyear">—</div>
+            <div id="growcounts"></div>
+            <div id="grownew"></div>
+            <button id="growExplore">Explore the full network&nbsp;▸</button>
+          </div>
+          <div id="growhint">Scroll to grow the network from its origin&nbsp;↓</div>
+        </div>
+        <div id="growspacer"></div>
+      </div>
     </section>
   </main>
   <footer>
-    <span>Seed: 66 works, 2001-2025 · 8 strands</span><span>AU detection: OpenAlex affiliation (incl. historical) + case-study roster</span>
+    <span>Seed: ~70 works, 2000–2026 · 9 strands</span><span>AU detection: OpenAlex affiliation (incl. historical) + case-study roster</span>
     <span>Strand: heuristic from topics + titles</span><span>Size: corpus-citation score (95th-pct clamp) · tooltip shows all-fields total</span>
   </footer>
 </div>
@@ -560,10 +590,20 @@ sim.on('tick',()=>{
 sim.on('end',renderLabels);
 const zoom=d3.zoom().scaleExtent([0.3,6]).on('zoom',e=>g.attr('transform',e.transform));
 svg.call(zoom);
-function resize(){const r=svg.node().getBoundingClientRect();W=r.width;H=r.height;
+function resize(reheat){const r=svg.node().getBoundingClientRect(), mr=document.querySelector('main').getBoundingClientRect();
+  W=r.width||mr.width; H=r.height||mr.height;                 // fall back to <main> when #net is hidden (Growth is the landing view)
   svg.attr('viewBox',`${-W/2} ${-H/2} ${W} ${H}`);
   placeRegions();
-  sim.force('x').x(tx);sim.force('y').y(ty);sim.alpha(.5).restart();}
+  if(reheat!==false){ sim.force('x').x(tx);sim.force('y').y(ty);sim.alpha(.5).restart(); }}  // skip the jiggle on a mere tab switch
+// Frame the whole network — matched to the Growth view's final zoom (same padding + aspect
+// fit + centre) so entering Explore doesn't snap to a different zoom level.
+function fitNet(){
+  let a=Infinity,b=-Infinity,c=Infinity,d=-Infinity;
+  GRAPH.nodes.forEach(n=>{ const r=(n.r||4)+6; a=Math.min(a,n.x-r); b=Math.max(b,n.x+r); c=Math.min(c,n.y-r); d=Math.max(d,n.y+r); });
+  const w=(b-a)*1.14, h=(d-c)*1.14, cx=(a+b)/2, cy=(c+d)/2;
+  let k=Math.min(W/w,H/h); k=Math.max(0.3,Math.min(6,k));
+  svg.call(zoom.transform, d3.zoomIdentity.translate(-k*cx,-k*cy).scale(k));
+}
 window.addEventListener('resize',resize); sizeShapes(); resize();
 
 // size toggle
@@ -574,15 +614,15 @@ d3.selectAll('#sizeSeg button').on('click',function(){
 
 // tooltip
 const tip=document.getElementById('tip');
-function showTip(e,d){
+function tipHTML(d){
   const role=d.anchor?('International leader · '+(d.centre||'')):(d.au?'Australia-based':'International co-author');
-  tip.innerHTML=`<b>${d.name}</b><div class="role" style="color:${themeColor(d.theme)}">${d.theme||'—'}</div>`+
+  return `<b>${d.name}</b><div class="role" style="color:${themeColor(d.theme)}">${d.theme||'—'}</div>`+
     `<div class="row"><span>${role}</span><span></span></div>`+
     `<div class="row"><span>${d.anchor?'AU links':'Connections'}</span><span>${d.deg}</span></div>`+
     `<div class="row"><span>Citations (all fields)</span><span>${(d.cited||0).toLocaleString()}</span></div>`+
     (d.year?`<div class="row"><span>First seed year</span><span>${d.year}</span></div>`:'');
-  tip.style.opacity=1; moveTip(e); hoverHighlight(d);
 }
+function showTip(e,d){ tip.innerHTML=tipHTML(d); tip.style.opacity=1; moveTip(e); hoverHighlight(d); }
 function moveTip(e){const w=tip.offsetWidth,h=tip.offsetHeight;let x=e.clientX+15,y=e.clientY+15;
   if(x+w>innerWidth)x=e.clientX-w-15; if(y+h>innerHeight)y=e.clientY-h-15; tip.style.left=x+'px';tip.style.top=y+'px';}
 function hideTip(){tip.style.opacity=0; hoverClear();}
@@ -649,32 +689,163 @@ document.getElementById('search').addEventListener('input',ev=>{
 document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{
   document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x===b));
   const v=b.dataset.v; document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on',s.dataset.v===v));
-  if(v==='time')drawTimeline(); else resize();
+  if(v==='time')initGrowth(); else { resize(false); fitNet(); }   // enter Explore at the Growth view's final framing
 }));
+// Landing experience: open on the Growth story, then hand off to the interactive Explore
+// view (same layout) once the network is fully built and the reader clicks through.
+function gotoExplore(){ document.querySelector('.tab[data-v="net"]').click(); }
+document.getElementById('growExplore').addEventListener('click',gotoExplore);
+// NB: the initGrowth() landing call lives at the very end of the file, after GROWN and the
+// growth functions are declared — calling it here would hit the const's temporal dead zone.
 
-// timeline
- let tlDrawn=false;
-function drawTimeline(force){ if(tlDrawn&&!force)return; tlDrawn=true;
-  const data=TL.per_year, lm=TL.landmarks, wrap=document.getElementById('tlwrap');
-  // fall back to the main pane width when the timeline tab is hidden (clientWidth
-  // is 0 then), so an export can render it without the tab ever being opened
-  const W2base=wrap.clientWidth||document.querySelector('main').clientWidth||900;
-  const W2=W2base-68,H2=Math.max(340,Math.min(460,(wrap.clientHeight||520)-120)),m={t:34,r:20,b:38,l:38};
-  const svg2=d3.select('#tlsvg').attr('viewBox',`0 0 ${W2} ${H2}`).attr('height',H2); svg2.selectAll('*').remove();
-  const years=d3.range(2001,2026), x=d3.scaleBand().domain(years).range([m.l,W2-m.r]).padding(0.28);
-  const ymax=d3.max(data,d=>d.total)||1, y=d3.scaleLinear().domain([0,ymax]).nice().range([H2-m.b,m.t]);
-  svg2.append('g').selectAll('line').data(y.ticks(5)).join('line').attr('class','gridline').attr('x1',m.l).attr('x2',W2-m.r).attr('y1',d=>y(d)).attr('y2',d=>y(d));
-  const byY=Object.fromEntries(data.map(d=>[d.year,d]));
-  svg2.append('g').selectAll('g').data(years).join('g').each(function(yr){const d=byY[yr]||{total:0,au_led:0};const gx=d3.select(this);
-    gx.append('rect').attr('x',x(yr)).attr('width',x.bandwidth()).attr('y',y(d.total)).attr('height',y(0)-y(d.total)).attr('fill','#ccd4d9').attr('rx',1.5);
-    gx.append('rect').attr('x',x(yr)).attr('width',x.bandwidth()).attr('y',y(d.au_led)).attr('height',y(0)-y(d.au_led)).attr('fill','var(--t-stat)').attr('rx',1.5);});
-  svg2.append('g').attr('class','axis').attr('transform',`translate(0,${H2-m.b})`).call(d3.axisBottom(x).tickValues(years.filter((d,i)=>i%2===0)).tickSizeOuter(0));
-  svg2.append('g').attr('class','axis').attr('transform',`translate(${m.l},0)`).call(d3.axisLeft(y).ticks(5).tickSizeOuter(0));
-  const lg=svg2.append('g').attr('transform',`translate(${W2-m.r-172},${m.t-16})`);
-  [['var(--t-stat)','AU first author'],['#ccd4d9','Other AU-linked']].forEach((d,i)=>{lg.append('rect').attr('x',i*100).attr('width',11).attr('height',11).attr('rx',2).attr('fill',d[0]);lg.append('text').attr('x',i*100+16).attr('y',9.5).attr('fill','var(--muted)').attr('font-size',10.5).text(d[1]);});
-  const big=lm[0]; if(big&&byY[big.year]){const px=x(big.year)+x.bandwidth()/2,py=y(byY[big.year].total);
-    svg2.append('line').attr('class','lm-line').attr('x1',px).attr('x2',px).attr('y1',py-6).attr('y2',m.t+8);
-    svg2.append('text').attr('class','lm').attr('x',px).attr('y',m.t+2).attr('text-anchor','middle').text(`▲ ${big.title.slice(0,32)}… (${(big.cby/1000).toFixed(0)}k cites)`);}
+// ---------- Growth view: scroll-driven build-up of the network over time ----------
+// Reuses the main layout's converged node positions (frozen), then reveals nodes and
+// links year by year as the reader scrolls. A node appears in its first corpus year
+// (node.year; leaders and other undated nodes inherit their earliest-dated collaborator's
+// year). A link appears once both its endpoints exist (max of the two node years). Node
+// size grows with the number of links it has accumulated so far — the only "grows over
+// time" signal the data supports (citations are only available as career totals, not per
+// year, so they are not animated).
+const GROWN={}, GROW_EARLY_LABELS=15; let growReady=false, growYearNow=null;
+function initGrowth(){
+  if(growReady){ renderGrow(true); return; }
+  growReady=true;
+  const nodes=GRAPH.nodes, edges=GRAPH.edges, N=nodes.length;
+  if(sim.alpha()>0.05){ for(let i=0;i<200;i++) sim.tick(); }        // settle layout before freezing it
+  const adj=Array.from({length:N},()=>[]);
+  edges.forEach(e=>{ adj[e.s].push(e.t); adj[e.t].push(e.s); });
+  // base year per node: its own first corpus year, else the earliest year among its collaborators
+  const nodeYear=nodes.map(n=> n.year!=null ? n.year : null);
+  nodes.forEach((n,i)=>{ if(nodeYear[i]==null){ let b=null; for(const j of adj[i]) if(nodes[j].year!=null) b=(b==null?nodes[j].year:Math.min(b,nodes[j].year)); nodeYear[i]=b; }});
+  const yMax=Math.max(...nodeYear.filter(y=>y!=null));
+  nodes.forEach((n,i)=>{ if(nodeYear[i]==null) nodeYear[i]=yMax; });
+  // Build order: grow the network OUTWARD FROM GEOFF CUMMING rather than by raw calendar
+  // year. A node's appearance year is the earliest year a chain of co-authorships connects
+  // it back to Cumming (a min-over-max-edge-year path). This roots the story on Cumming
+  // (statistical reform, the intellectual origin) and pushes peripheral clusters — e.g. the
+  // science-communication / STS network around Sujatha Raman — to the point where they
+  // actually meet the metascience core, instead of opening the animation on them.
+  const appY=nodeYear.slice();
+  let root=nodes.findIndex(n=>n.name.toLowerCase()==='geoff cumming');
+  if(root<0) root=nodes.findIndex(n=>/cumming/i.test(n.name));
+  if(root>=0){
+    const dist=new Array(N).fill(Infinity); dist[root]=nodeYear[root];
+    const q=[root], inq=new Array(N).fill(false); inq[root]=true;
+    while(q.length){ const v=q.shift(); inq[v]=false;
+      for(const u of adj[v]){ const cand=Math.max(nodeYear[v],nodeYear[u],dist[v]);   // edge exists once both ends do
+        if(cand<dist[u]){ dist[u]=cand; if(!inq[u]){ inq[u]=true; q.push(u); } } } }
+    const cy=nodeYear[root];
+    // disconnected clusters (chiefly the parallel Indigenous-research component) have no
+    // path to Cumming — let them build on their own timeline, but never before he appears.
+    for(let i=0;i<N;i++) appY[i] = dist[i]<Infinity ? dist[i] : Math.max(nodeYear[i], cy+1);
+  }
+  const minY=Math.min(...appY), maxY=Math.max(...appY);
+  const eY=edges.map(e=>Math.max(appY[e.s],appY[e.t]));             // a link exists once both ends do
+  const incY=Array.from({length:N},()=>[]);                        // per-node incident link years (sorted) -> cumulative degree
+  edges.forEach((e,k)=>{ incY[e.s].push(eY[k]); incY[e.t].push(eY[k]); });
+  incY.forEach(a=>a.sort((x,y)=>x-y));
+  const bcount=(a,yr)=>{ let lo=0,hi=a.length; while(lo<hi){ const m=(lo+hi)>>1; if(a[m]<=yr)lo=m+1; else hi=m; } return lo; };
+  const appYs=[...appY].sort((x,y)=>x-y), eYs=[...eY].sort((x,y)=>x-y);
+  const gx=nodes.map(n=>n.x||0), gy=nodes.map(n=>n.y||0);           // freeze the converged positions
+  // full extent of the frozen layout + the svg's aspect ratio, so the camera can be
+  // framed tightly on the visible nodes each year and zoom out as the network spreads
+  let a=Infinity,b=-Infinity,c=Infinity,d=-Infinity;
+  for(let i=0;i<N;i++){ a=Math.min(a,gx[i]); b=Math.max(b,gx[i]); c=Math.min(c,gy[i]); d=Math.max(d,gy[i]); }
+  const fullW=(b-a)||1, fullH=(d-c)||1;
+  const rect=document.getElementById('growsvg').getBoundingClientRect();
+  const aspect=(rect.width&&rect.height)?rect.width/rect.height:1.5;
+  const gsvg=d3.select('#growsvg'); gsvg.selectAll('*').remove();
+  const gg=gsvg.append('g');
+  const geSel=gg.append('g').attr('stroke-linecap','round').selectAll('line').data(edges).join('line')
+    .attr('x1',e=>gx[e.s]).attr('y1',e=>gy[e.s]).attr('x2',e=>gx[e.t]).attr('y2',e=>gy[e.t])
+    .attr('stroke',e=>e.k==='cross'?'var(--link-cross)':'var(--link)')
+    .attr('stroke-width',e=>e.k==='cross'?1:0.7).attr('stroke-opacity',0);
+  const gnSel=gg.append('g').selectAll('g.gnode').data(nodes).join('g').attr('class','gnode')
+    .attr('transform',n=>`translate(${gx[n.i]},${gy[n.i]})`).attr('opacity',0);
+  gnSel.each(function(n){ const s=d3.select(this), fill=themeColor(n.theme);
+    if(n.anchor) s.append('rect').attr('fill',fill).attr('fill-opacity',0.5).attr('stroke','#fff').attr('stroke-width',0.8);
+    else s.append('circle').attr('fill',fill).attr('fill-opacity',n.au?1:0.5).attr('stroke','#fff').attr('stroke-width',0.6);
+  });
+  // labels: the leaders + pinned figures always; plus the earliest nodes so the opening
+  // frame is readable (these early-only labels fade out once the map fills — see renderGrow)
+  const glSel=gg.append('g').selectAll('text').data(nodes.filter(n=>n.anchor||n.pin||appY[n.i]<=minY+3)).join('text')
+    .attr('class','gnode-lbl').attr('text-anchor','middle').attr('x',n=>gx[n.i]).attr('y',n=>gy[n.i]-9).text(n=>n.name).attr('opacity',0);
+  // research-strand headings — the same pills as the Explore view, at the same wheel angles,
+  // each revealed once its strand first gains a node so the labels grow in with the network.
+  const R=Math.min(W,H), grad=R*0.475, gfs=Math.max(12,Math.min(21,R*0.028)), gpad=8;
+  const grSel=gg.append('g').selectAll('g.region').data(THKEYS).join('g').attr('class','region')
+    .attr('transform',t=>`translate(${Math.cos(themeAngle[t])*grad},${Math.sin(themeAngle[t])*grad})`).style('opacity',0);
+  grSel.append('rect').attr('class','region-bg').each(function(t){
+    const w=(THEME_SHORT[t]||t).length*gfs*0.56+gpad*2, h=gfs*1.6;
+    d3.select(this).attr('x',-w/2).attr('y',-h/2).attr('width',w).attr('height',h).attr('rx',h/2); });
+  grSel.append('text').attr('class','region-tx').attr('text-anchor','middle').attr('fill',t=>themeColor(t))
+    .attr('font-size',gfs).attr('y',gfs*0.34).text(t=>THEME_SHORT[t]||t);
+  const strandYr={};                                               // earliest year each strand gains a (visible) node
+  nodes.forEach(n=>{ if(n.theme!=null){ const y=appY[n.i]; if(strandYr[n.theme]==null||y<strandYr[n.theme]) strandYr[n.theme]=y; }});
+  Object.assign(GROWN,{nodes,edges,appY,eY,appYs,eYs,minY,maxY,geSel,gnSel,glSel,grSel,strandYr,bcount,
+    degAt:(i,yr)=>bcount(incY[i],yr), gx,gy,gsvg,aspect,fullW,fullH,
+    fullVB:`${a-44} ${c-44} ${fullW+88} ${fullH+88}`});
+  gsvg.attr('viewBox', growViewBox(minY));                          // open framed on the earliest researchers
+  gnSel.on('mouseenter',growHoverEnter).on('mousemove',moveTip).on('mouseleave',growHoverLeave);
+  const sc=document.getElementById('growscroll');
+  sc.addEventListener('scroll',()=>{ if(!GROWN._raf) GROWN._raf=requestAnimationFrame(()=>{ GROWN._raf=0; renderGrow(); }); });
+  renderGrow(true);
+}
+// Hover on a growth node: same tooltip as the network map, plus a local spotlight of
+// the node's neighbourhood (restricted to nodes/links already revealed at the current year).
+function growHoverEnter(e,d){
+  if(GROWN.appY[d.i] > growYearNow) return;         // ignore not-yet-revealed nodes
+  tip.innerHTML=tipHTML(d); tip.style.opacity=1; moveTip(e);
+  const keep=adj[d.i], yr=growYearNow;
+  GROWN.gnSel.style('opacity',n=> GROWN.appY[n.i]>yr?0:((n.i===d.i||keep.has(n.i))?(n.au||n.anchor?1:0.65):0.08));
+  GROWN.geSel.style('stroke-opacity',(ed,i)=> GROWN.eY[i]>yr?0:((ed.s===d.i||ed.t===d.i)?(ed.k==='cross'?0.6:0.4):0.03));
+}
+function growHoverLeave(){ tip.style.opacity=0; GROWN.gnSel.style('opacity',null); GROWN.geSel.style('stroke-opacity',null); }
+// Camera box for a given year: tight around the nodes visible so far (plus their radii),
+// clamped to a minimum span so a handful of early nodes aren't absurdly magnified, and
+// expanded to the svg's aspect ratio so the fit is snug without distortion.
+function growViewBox(yr){
+  const {appY,gx,gy,aspect,fullW,fullH,nodes}=GROWN;
+  let a=Infinity,b=-Infinity,c=Infinity,d=-Infinity,any=false;
+  for(let i=0;i<nodes.length;i++){ if(appY[i]<=yr){ any=true; const r=growR(i,yr)+7;
+    a=Math.min(a,gx[i]-r); b=Math.max(b,gx[i]+r); c=Math.min(c,gy[i]-r); d=Math.max(d,gy[i]+r); } }
+  if(!any) return GROWN.fullVB;
+  let cx=(a+b)/2, cy=(c+d)/2, w=(b-a)*1.14, h=(d-c)*1.14;
+  w=Math.max(w, fullW*0.24); h=Math.max(h, fullH*0.24);            // don't over-zoom on a tiny cluster
+  if(w/h < aspect) w=h*aspect; else h=w/aspect;                    // match svg aspect (no distortion)
+  return `${cx-w/2} ${cy-h/2} ${w} ${h}`;
+}
+// Growth radius scales UP to the node's exact Explore-view size (n.r) as its links
+// accumulate — reaching it precisely at full build, so the two views' node sizes match.
+function growR(i,yr){ const n=GRAPH.nodes[i], f=GROWN.degAt(i,yr)/Math.max(1,n.deg);
+  return (n.r||4)*(0.32+0.68*Math.sqrt(f)); }
+function renderGrow(force){
+  if(!growReady) return;
+  const sc=document.getElementById('growscroll');
+  const p=Math.min(1,Math.max(0,sc.scrollTop/((sc.scrollHeight-sc.clientHeight)||1)));
+  const yr=Math.round(GROWN.minY + p*(GROWN.maxY-GROWN.minY));
+  const hint=document.getElementById('growhint'); if(hint) hint.style.opacity=p>0.015?0:1;
+  if(!force && yr===growYearNow) return;
+  growYearNow=yr;
+  const {appY,eY,gnSel,geSel,glSel}=GROWN;
+  gnSel.transition().duration(260).attr('opacity',n=> appY[n.i]<=yr ? (n.au||n.anchor?1:0.55) : 0);
+  gnSel.select('circle').transition().duration(260).attr('r',n=> appY[n.i]<=yr?growR(n.i,yr):0.01);
+  gnSel.select('rect').transition().duration(260)
+    .attr('width',n=>{const r=appY[n.i]<=yr?growR(n.i,yr):0.01;return r*2;})
+    .attr('height',n=>{const r=appY[n.i]<=yr?growR(n.i,yr):0.01;return r*2;})
+    .attr('x',n=>-(appY[n.i]<=yr?growR(n.i,yr):0.01)).attr('y',n=>-(appY[n.i]<=yr?growR(n.i,yr):0.01)).attr('rx',2);
+  geSel.attr('stroke-opacity',(e,i)=> eY[i]<=yr ? (e.k==='cross'?0.28:0.15) : 0);
+  const vN=GROWN.bcount(GROWN.appYs,yr), vE=GROWN.bcount(GROWN.eYs,yr);
+  // leaders & pinned figures stay labelled; the early-node labels fade once the map fills up
+  glSel.transition().duration(260).attr('opacity',n=> appY[n.i]>yr ? 0 : ((n.anchor||n.pin||vN<=GROW_EARLY_LABELS)?1:0));
+  document.getElementById('growyear').textContent=yr;
+  document.getElementById('growcounts').textContent=`${vN} researcher${vN===1?'':'s'} · ${vE} link${vE===1?'':'s'}`;
+  const joiners=GROWN.nodes.filter(n=>appY[n.i]===yr && (n.anchor||n.pin)).map(n=>n.name);
+  document.getElementById('grownew').innerHTML = joiners.length ? `<b>Joins ${yr}:</b> ${joiners.slice(0,5).join(', ')}` : '';
+  GROWN.grSel.transition().duration(300).style('opacity',t=> (GROWN.strandYr[t]!=null && yr>=GROWN.strandYr[t]) ? 0.96 : 0);
+  const done=yr>=GROWN.maxY;                                        // network fully built -> offer the interactive view
+  const ex=document.getElementById('growExplore'); if(ex) ex.style.display=done?'inline-block':'none';
+  GROWN.gsvg.transition().duration(700).ease(d3.easeCubicInOut).attr('viewBox', growViewBox(yr));  // zoom out as it grows
 }
 
 // ---------- high-res PNG export ----------
@@ -729,12 +900,12 @@ function vbOf(svgEl,fallbackW,fallbackH){
 function exportAll(){
   const net=document.getElementById('net');
   exportSVG(net,vbOf(net,1200,800),'metascience-network.png');
-  drawTimeline(true);                       // ensure the timeline is rendered even if its tab was never opened
-  const tls=document.getElementById('tlsvg');
-  setTimeout(()=>exportSVG(tls,vbOf(tls,900,460),'metascience-timeline.png'),150);
 }
 const exportBtn=document.getElementById('exportBtn');
 if(exportBtn) exportBtn.addEventListener('click',exportAll);
+
+// Kick off the Growth landing view now that every symbol it needs is initialised.
+initGrowth();
 
 </script>
 </body>
